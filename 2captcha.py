@@ -16,5 +16,4 @@ except Exception as e:
   sys.exit(e)
 
 else:
-  sys.exit('Solved. Here is the answer: ' + str(result))
-  
+  sys.exit('Solved. Here is the answer: ' + str(result)) 
