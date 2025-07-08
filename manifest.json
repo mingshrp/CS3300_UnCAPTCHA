@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "UnCAPTCHA",
+  "description": "Solve text-based CAPTCHAs automatically.",
+  "version": "0.1.0",
+  "action": {
+    "default_popup": "popup/popup.html"
+  },
+  "icons": {
+    "32": "images/icons.png",
+    "48": "images/icons.png",
+    "128": "images/icons.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "notifications"
+  ]
+}
