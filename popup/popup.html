@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="style.css">
   <title>UnCAPTCHA</title>
   <style>
     body {
@@ -11,7 +12,6 @@
       width: 200px;
       background-color: #113f52; 
       color: white; 
-
     }
     h1 {
       font-size: 30px;
@@ -21,64 +21,40 @@
       font-size: 12px;
       color: #555;
     }
-    .toggle-container {
-      margin-top: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .toggle-button {
-      position: relative;
-      width: 50px;
-      height: 25px;
-      background-color: #ccc;
-      border-radius: 25px;
-      cursor: pointer;
-    }
-    .toggle-button::after {
-      content: "";
-      position: absolute;
-      top: 2px;
-      left: 2px;
-      width: 21px;
-      height: 21px;
-      background-color: rgb(67, 126, 175);
-      border-radius: 50%;
-      transition: 0.3s;
-    }
-    .toggle-button.enabled {
-      background-color: #4caf50;
-    }
-    .toggle-button.enabled::after {
-      transform: translateX(25px);
-    }
   </style>
 </head>
 <body>
-  <h1>UnCAPTCHA</h1>
-  <p style="color: #b7d7f4;">Version: 0.1.0</p>
-
-  <div class="toggle-container">
-    <span id="status-label">Disabled</span>
-    <div id="toggle" class="toggle-button"></div>
+  <!-- ...existing code... -->
+<body>
+  <h1>UnCAPTCHA </h1>
+  <div style="display: flex; align-items: center;">
+    <p style="color: #b7d7f4; margin: 0; font-size: 12px;">Version: 0.1.0</p>
+    <div style="flex: 1"></div>
+    <label class="switch" style="margin-left: 10px;">
+      <input type="checkbox" id="toggle-extension">
+      <span class="slider round"></span>
+    </label>
+    <span id="toggle-label" style="margin-left:10px;font-size:14px;"></span>
   </div>
+</body>
 
   <script>
-    const toggle = document.getElementById('toggle');
-    const statusLabel = document.getElementById('status-label');
-
-    // Load previous state
-    chrome.storage.sync.get('enabled', (data) => {
-      if (data.enabled) {
-        toggle.classList.add('enabled');
-        statusLabel.textContent = 'Enabled';
-      }
+    // Restore toggle state on popup open
+    document.addEventListener('DOMContentLoaded', function() {
+      chrome.storage.sync.get(['extensionEnabled'], function(result) {
+        const enabled = !!result.extensionEnabled;
+        document.getElementById('toggle-extension').checked = enabled;
+        document.getElementById('toggle-label').textContent = enabled ? "On" : "Off";
+      });
     });
 
-    toggle.addEventListener('click', () => {
-      const isEnabled = toggle.classList.toggle('enabled');
-      statusLabel.textContent = isEnabled ? 'Enabled' : 'Disabled';
-      chrome.storage.sync.set({ enabled: isEnabled });
+    // Save toggle state when changed
+    document.getElementById('toggle-extension').addEventListener('change', function(e) {
+      const enabled = e.target.checked;
+      chrome.storage.sync.set({ extensionEnabled: enabled });
+      document.getElementById('toggle-label').textContent = enabled ? "On" : "Off";
+      // Optionally, send a message to background script here
+      // chrome.runtime.sendMessage({ enabled });
     });
   </script>
 </body>
