@@ -1,11 +1,13 @@
 import sys
 import os
+from dotenv import load_dotenv
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+load_dotenv()
 
 from twocaptcha import TwoCaptcha
 
-api_key = os.getenv('APIKEY_2CAPTCHA', 'be44e18829a741db9aa36197b870a163')
+api_key = os.getenv('APIKEY_2CAPTCHA')
 
 solver = TwoCaptcha(api_key)
 
