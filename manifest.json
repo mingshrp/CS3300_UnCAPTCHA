@@ -1,22 +1,41 @@
 {
   "manifest_version": 3,
   "name": "UnCAPTCHA",
-  "description": "Solve text-based CAPTCHAs automatically.",
   "version": "0.1.0",
+  "description": "Solve text-based CAPTCHAs automatically.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*",
+    "https://2captcha.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
   "action": {
-    "default_popup": "popup/popup.html"
+    "default_popup": "popup.html",
+    "default_title": "2captcha Solver"
   },
   "icons": {
     "32": "images/icons.png",
     "48": "images/icons.png",
     "128": "images/icons.png"
   },
-  "background": {
-    "service_worker": "background.js",
-    "type": "module"
-  },
-  "permissions": [
-    "storage",
-    "notifications"
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["<all_urls>"]
+    }
   ]
 }
