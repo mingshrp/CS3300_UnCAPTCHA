@@ -4,13 +4,13 @@
 
 <h1 align="center">UnCAPTCHA</h1>
 
-<p align="center">
-  A Chrome extension that automatically solves CAPTCHAs using the 2Captcha API.
-</p>
+
+## Description
+A Chrome extension that automatically solves normal CAPTCHAs using the 2Captcha API.
 
 ## Installation
 
-Note: This extension is not yet published on the Chrome Web Store.
+**Note**: This extension is not yet published on the Chrome Web Store.
 You must install it manually in Developer Mode using the steps below:
 
 Clone or download the repository, then load the extension manually in Chrome:
