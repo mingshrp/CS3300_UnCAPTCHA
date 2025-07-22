@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="UnCAPTCHA Logo" width="100" />
+  <img src="images/icons.png" alt="UnCAPTCHA Logo" width="100" />
 </p>
 
 <h1 align="center">UnCAPTCHA</h1>
