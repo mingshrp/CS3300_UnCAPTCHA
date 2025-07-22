@@ -41,7 +41,7 @@ You can test UnCAPTCHA on the following public CAPTCHA demo pages:
 5. Watch console for success or error messages
 
 ## License
-The code in this repository is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. See the LICENSE file for more details.
+The code in this repository is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. See the [License](#license) file for more details.
 
 
 
