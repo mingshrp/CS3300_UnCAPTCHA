@@ -30,6 +30,8 @@ Before using UnCAPTCHA, make sure to add your **2Captcha API key** to the enviro
 
 ## Testing
 You can test UnCAPTCHA on the following public CAPTCHA demo pages:
+- [2Captcha Normal Demo](https://2captcha.com/demo/normal)
+- [Captcha.com Demo](https://captcha.com/demos/features/captcha-demo.aspx)
 
 ### How to Test:
 1. Open one of the demo pages above in a new browser tab
