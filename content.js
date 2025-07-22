@@ -50,7 +50,7 @@ class ImageCaptchaDetector {
   }
   
   stopDetection() {
-    console.log('UnCAPTCHA: Image CAPTCHA detector stopped');
+    console.log('UnCAPTCHA: Image CAPTCHA detector disabled'); // Disable the extension?
     
     // Stop the mutation observer
     if (this.observer) {
@@ -142,6 +142,8 @@ class ImageCaptchaDetector {
     try {
       // Wait for image to fully load
       await this.waitForImageLoad(imgElement);
+
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
       
       // Convert image to base64
       const base64 = await this.imageToBase64(imgElement);
