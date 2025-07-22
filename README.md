@@ -44,8 +44,8 @@ You can test UnCAPTCHA on the following public CAPTCHA demo pages:
 
 This project is a collaborative effort between:
 
-- [Mingma Sherpa](https://github.com/yourusername)
-- [Mehak Hagemann](https://github.com/theirusername)
+- [Mingma Sherpa](https://github.com/mingshrp)
+- [Mehak Hagemann](https://github.com/mikki613)
   
 ## License
 The code in this repository is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. 
