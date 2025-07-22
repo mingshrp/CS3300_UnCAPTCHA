@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "UnCAPTCHA",
   "version": "0.1.0",
-  "description": "Solve text-based CAPTCHAs automatically.",
+  "description": "Solve text-based CAPTCHAs automatically (text distorted on an image).",
   "permissions": [
     "activeTab",
     "storage",

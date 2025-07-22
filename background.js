@@ -1,5 +1,6 @@
 // background.js
 class CaptchaSolver {
+
   constructor() {
     this.baseUrl = 'https://2captcha.com';
     this.apiKey = null;
@@ -22,7 +23,7 @@ class CaptchaSolver {
     const formData = new FormData();
     formData.append('key', this.apiKey);
     formData.append('method', captchaData.method || 'post');
-    formData.append('json', '1');
+    formData.append('json', '1');   // tells the server to send the response as JSON
     
     // Add captcha-specific data
     Object.keys(captchaData).forEach(key => {
@@ -31,6 +32,7 @@ class CaptchaSolver {
       }
     });
     
+    // Submit POST request to 2captcha API URL
     try {
       const response = await fetch(`${this.baseUrl}/in.php`, {
         method: 'POST',
@@ -39,6 +41,8 @@ class CaptchaSolver {
       
       const result = await response.json();
       
+
+      // JSON status==1 success 
       if (result.status === 1) {
         return result.request; // Returns captcha ID
       } else {
@@ -55,19 +59,23 @@ class CaptchaSolver {
       throw new Error('API key not set');
     }
     
-    const maxAttempts = 30; // Max 5 minutes (30 * 10 seconds)
+    const maxAttempts = 60; // Max 5 minutes (60 * 5 seconds)
     let attempts = 0;
     
+    // Timeout 5 seconds 
+  await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // LOOP polling for result
     while (attempts < maxAttempts) {
       try {
-        const response = await fetch(`${this.baseUrl}/res.php?key=${this.apiKey}&action=get&id=${captchaId}&json=1`);
+        const response = await fetch(`${this.baseUrl}/res.php?key=${this.apiKey}&action=get&id=${captchaId}&json=1`); // GET request to get captcha result
         const result = await response.json();
         
-        if (result.status === 1) {
-          return result.request; // Returns the solution
+        if (result.status === 1) { // CAPTCHA solved successfully
+          return result.request; // Returns solution
         } else if (result.error_text === 'CAPCHA_NOT_READY') {
-          // Wait 10 seconds before trying again
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          // Wait 5 seconds before trying again
+          await new Promise(resolve => setTimeout(resolve, 5000));
           attempts++;
         } else {
           throw new Error(result.error_text || 'Failed to get captcha result');
@@ -76,7 +84,7 @@ class CaptchaSolver {
         console.error('Error getting captcha result:', error);
         throw error;
       }
-    }
+    } // try again after 10 seconds
     
     throw new Error('Captcha solving timeout');
   }
