@@ -10,6 +10,9 @@
 
 ## Installation
 
+Note: This extension is not yet published on the Chrome Web Store.
+You must install it manually in Developer Mode using the steps below:
+
 Clone or download the repository, then load the extension manually in Chrome:
 
 1. Open `chrome://extensions/`
