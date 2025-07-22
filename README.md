@@ -16,7 +16,7 @@ You must install it manually in Developer Mode using the steps below:
 Clone or download the repository, then load the extension manually in Chrome:
 
 1. Open `chrome://extensions/`
-2. Enable **Developer mode**
+2. Toggle **Developer mode** on top right
 3. Click **Load unpacked**
 4. Select the root folder of this project
 
