@@ -39,3 +39,7 @@ You can test UnCAPTCHA on the following public CAPTCHA demo pages:
 3. Go to **Console** tab to view logs from the extension
 4. Click the UnCAPTCHA icon in your toolbar and toggle the extension **ON**
 5. Watch console for success or error messages
+
+## License
+
+[MIT](https://choosealicense.com/licenses/mit/)
