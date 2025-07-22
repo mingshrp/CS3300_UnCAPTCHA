@@ -31,7 +31,7 @@ Before using UnCAPTCHA, make sure to add your **2Captcha API key** to the enviro
 ## Testing
 You can test UnCAPTCHA on the following public CAPTCHA demo pages:
 
-###How to Test:
+### How to Test:
 1. Open one of the demo pages above in a new browser tab
 2. Right-click anywhere on the page and select "**Inspect**" to open DevTools
 3. Go to **Console** tab to view logs from the extension
