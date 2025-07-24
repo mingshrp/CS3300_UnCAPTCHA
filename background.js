@@ -61,9 +61,9 @@ class CaptchaSolver {
     
     const maxAttempts = 60; // Max 5 minutes (60 * 5 seconds)
     let attempts = 0;
-    
-    // Timeout 5 seconds 
-  await new Promise(resolve => setTimeout(resolve, 5000));
+
+    // TIMEOUT 5 seconds
+    await new Promise(resolve => setTimeout(resolve, 5000));
 
     // LOOP polling for result
     while (attempts < maxAttempts) {
@@ -84,7 +84,7 @@ class CaptchaSolver {
         console.error('Error getting captcha result:', error);
         throw error;
       }
-    } // try again after 10 seconds
+    } // try again after 5 seconds
     
     throw new Error('Captcha solving timeout');
   }
