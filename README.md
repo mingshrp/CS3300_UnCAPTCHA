@@ -6,7 +6,8 @@
 
 
 ## Description
-A Chrome extension that automatically solves normal CAPTCHAs using the 2Captcha API.
+This is a Chrome extension that automatically solves normal CAPTCHAs using the [2Captcha API](https://2captcha.com)
+
 
 ## Installation
 
