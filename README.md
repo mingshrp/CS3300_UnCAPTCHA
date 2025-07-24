@@ -28,7 +28,7 @@ Before using UnCAPTCHA, make sure to add your **2Captcha API key** to the enviro
 2. Add your API key:
 
 
-## Testing
+## Usage
 You can test UnCAPTCHA on the following public CAPTCHA demo pages:
 - [2Captcha Normal Demo](https://2captcha.com/demo/normal)
 - [Captcha.com Demo](https://captcha.com/demos/features/captcha-demo.aspx)
@@ -40,8 +40,15 @@ You can test UnCAPTCHA on the following public CAPTCHA demo pages:
 4. Click the UnCAPTCHA icon in your toolbar and toggle the extension **ON**
 5. Watch console for success or error messages
 
+## Collaboration
+
+This project is a collaborative effort between:
+
+- [Mingma Sherpa](https://github.com/mingshrp)
+- [Mehak Hagemann](https://github.com/mikki613)
+  
 ## License
-The code in this repository is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. See the [License](#license) file for more details.
+The code in this repository is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License. 
 
 
 
