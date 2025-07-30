@@ -1,59 +1,42 @@
-// popup.js
+// Description: This script handles the popup UI for UnCAPTCHA and adds functionality to toggle the extension on and off.
+
 document.addEventListener('DOMContentLoaded', function() {
-  const toggleButton = document.getElementById('toggleButton');
+  const toggleButton = document.getElementById('toggleButton'); // reference to popup.html element with id toggleButton
   
-  // Load saved state
+  // Grab the current state (enabled/disabled) and API key from Chrome's storage
   chrome.storage.sync.get(['enabled', 'apiKey'], function(result) {
     toggleButton.checked = result.enabled || false;
     
     // Check if API key is set
     if (!result.apiKey) {
-      // Prompt for API key if not set
+      // If not set, prompt user to set it 
       promptForApiKey();
     }
   });
   
-  // Handle toggle changes
+  // Event listener for when user clicks the toggle button
   toggleButton.addEventListener('change', function() {
     const enabled = toggleButton.checked;
     
     chrome.storage.sync.set({enabled: enabled}, function() {
       console.log('UnCAPTCHA', enabled ? 'enabled' : 'disabled');
       
-      // Send message to background script
+      // Send message to background of action type and state change
       chrome.runtime.sendMessage({
         action: 'toggleExtension',
         enabled: enabled
       });
-      
-      // Notify all content scripts about the state change
-      chrome.tabs.query({}, function(tabs) {
-        tabs.forEach(tab => {
-          chrome.tabs.sendMessage(tab.id, {
-            action: 'toggleStateChanged',
-            isEnabled: enabled
-          }).catch(() => {
-            // Ignore errors for tabs that don't have the content script
-          });
-        });
-      });
+    
     });
   });
-  
+
   function promptForApiKey() {
-    const apiKey = prompt('Please enter your 2captcha API key:');
+    const apiKey = prompt('Please make sure your 2captcha API key is set. Check the GitHub repository for instructions.');
     if (apiKey) {
       chrome.storage.sync.set({apiKey: apiKey}, function() {
         console.log('API key saved');
       });
     }
   }
-  
-  // Add context menu for API key management
-  document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-    if (confirm('Do you want to update your 2captcha API key?')) {
-      promptForApiKey();
-    }
-  });
+
 });

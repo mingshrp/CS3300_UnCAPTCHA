@@ -1,4 +1,3 @@
-/* The switch - the box around the slider */
 .switch {
   position: relative;
   display: inline-block;
@@ -6,14 +5,12 @@
   height: 34px;
 }
 
-/* Hide default HTML checkbox */
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
 
-/* The slider */
 .slider {
   position: absolute;
   cursor: pointer;
@@ -38,15 +35,15 @@
   transition: .4s;
 }
 
-input:checked + .slider {
+input:checked+.slider {
   background-color: #60a5e7;
 }
 
-input:focus + .slider {
+input:focus+.slider {
   box-shadow: 0 0 1px #60a5e7;
 }
 
-input:checked + .slider:before {
+input:checked+.slider:before {
   -webkit-transform: translateX(26px);
   -ms-transform: translateX(26px);
   transform: translateX(26px);
@@ -68,17 +65,17 @@ input:checked + .slider:before {
   display: block;
   position: absolute;
   right: 10px;
-  top: 14px; /* moved down from 6px to 16px */
+  top: 14px;
   font-size: 10px;
   font-weight: bold;
   transition: 0.4s;
   pointer-events: none;
 }
 
-input:checked + .slider:after {
+input:checked+.slider:after {
   content: "On";
   left: 10px;
   right: auto;
   color: #ffffff;
-  top: 14px; /* ensure the checked state is also moved down */
+  top: 14px;
 }
