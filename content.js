@@ -331,3 +331,8 @@ class ImageCaptchaDetector {
 
 // Initialize the image captcha detector when the page loads
 const imageCaptchaDetector = new ImageCaptchaDetector();
+
+// Export for unit testing in Node.js environment
+if (typeof module !== 'undefined') {
+  module.exports = { ImageCaptchaDetector };
+}
