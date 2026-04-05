@@ -155,14 +155,15 @@ class ImageCaptchaDetector {
       id.includes(keyword) ||
       className.includes(keyword)
     );
+  
 
     const hasReasonableSize =
       img.width >= 50 && img.height >= 20 &&
       img.width <= 500 && img.height <= 200;
 
-    const hasNearbyInput = this.findCaptchaInput(img) !== null;
+    const hasNearbyInput = document.querySelector('input');
 
-    return hasKeyword && hasReasonableSize && hasNearbyInput;
+    return hasKeyword || (hasNearbyInput && hasReasonableSize);
   }
 
   async handleImageCaptcha(imgElement) {
