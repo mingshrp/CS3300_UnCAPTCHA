@@ -1,56 +1,106 @@
 // popup.js
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', () => {
   const toggleButton = document.getElementById('toggleButton');
-  
+  const statusEl = document.getElementById('status');
+  const detailsEl = document.getElementById('details');
+
   // Load saved state
-  chrome.storage.sync.get(['enabled', 'apiKey'], function(result) {
-    toggleButton.checked = result.enabled || false;
-    
-    // Check if API key is set
+  chrome.storage.sync.get(['enabled', 'apiKey'], (result) => {
+    const enabled = result.enabled ?? true;
+    toggleButton.checked = enabled;
+
     if (!result.apiKey) {
-      // Prompt for API key if not set
       promptForApiKey();
     }
+
+    updateCaptchaStatus();
   });
-  
+
   // Handle toggle changes
-  toggleButton.addEventListener('change', function() {
+  toggleButton.addEventListener('change', () => {
     const enabled = toggleButton.checked;
-    
-    chrome.storage.sync.set({enabled: enabled}, function() {
+
+    chrome.storage.sync.set({ enabled }, () => {
       console.log('UnCAPTCHA', enabled ? 'enabled' : 'disabled');
-      
-      // Send message to background script
+
+      // Notify background script
       chrome.runtime.sendMessage({
         action: 'toggleExtension',
         enabled: enabled
       });
-      
-      // Notify all content scripts about the state change
-      chrome.tabs.query({}, function(tabs) {
-        tabs.forEach(tab => {
-          chrome.tabs.sendMessage(tab.id, {
+
+      // Notify active tab content script
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs.length) return;
+
+        chrome.tabs.sendMessage(
+          tabs[0].id,
+          {
             action: 'toggleStateChanged',
             isEnabled: enabled
-          }).catch(() => {
-            // Ignore errors for tabs that don't have the content script
-          });
-        });
+          },
+          () => {
+            if (chrome.runtime.lastError) {
+              // Ignore pages where content script is not available
+              console.log('Content script not available on this tab.');
+            }
+          }
+        );
       });
+
+      updateCaptchaStatus();
     });
   });
-  
+
+  function updateCaptchaStatus() {
+    if (!statusEl || !detailsEl) return;
+
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (!tabs.length) {
+        statusEl.textContent = 'No active tab ❌';
+        detailsEl.textContent = '';
+        return;
+      }
+
+      chrome.tabs.sendMessage(
+        tabs[0].id,
+        { action: 'scanCaptcha' },
+        (response) => {
+          if (chrome.runtime.lastError || !response) {
+            statusEl.textContent = 'No response ❌';
+            detailsEl.textContent = 'Open a webpage to scan for CAPTCHA.';
+            return;
+          }
+
+          if (response.detected) {
+            statusEl.textContent = 'CAPTCHA detected ✅';
+            statusEl.style.color = 'red';
+            detailsEl.innerHTML = `
+              Total: ${response.total}<br>
+              Iframe: ${response.iframeCaptchas}<br>
+              Image: ${response.imageCaptchas}
+            `;
+          } else {
+            statusEl.textContent = 'No CAPTCHA found 🎉';
+            statusEl.style.color = 'green';
+            detailsEl.textContent = 'No CAPTCHA elements detected on this page.';
+          }
+        }
+      );
+    });
+  }
+
   function promptForApiKey() {
     const apiKey = prompt('Please enter your 2captcha API key:');
-    if (apiKey) {
-      chrome.storage.sync.set({apiKey: apiKey}, function() {
+    if (apiKey && apiKey.trim()) {
+      chrome.storage.sync.set({ apiKey: apiKey.trim() }, () => {
         console.log('API key saved');
       });
     }
   }
-  
-  // Add context menu for API key management
-  document.addEventListener('contextmenu', function(e) {
+
+  // Right click popup to update API key
+  document.addEventListener('contextmenu', (e) => {
     e.preventDefault();
     if (confirm('Do you want to update your 2captcha API key?')) {
       promptForApiKey();

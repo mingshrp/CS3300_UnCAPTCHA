@@ -6,7 +6,7 @@ class ImageCaptchaDetector {
     this.observer = null;
     console.log(" Content script loaded");
     
-    
+
     this.startDetection();  
   }
 
@@ -287,3 +287,35 @@ const imageCaptchaDetector = new ImageCaptchaDetector();
 if (typeof module !== 'undefined') {
   module.exports = { ImageCaptchaDetector };
 }
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "scanCaptcha") {
+    const iframes = document.querySelectorAll("iframe");
+    const images = document.querySelectorAll("img");
+
+    let iframeCount = 0;
+    let imageCount = 0;
+
+    // Count iframe captchas
+    iframes.forEach((frame) => {
+      const src = (frame.src || "").toLowerCase();
+      if (src.includes("recaptcha") || src.includes("hcaptcha")) {
+        iframeCount++;
+      }
+    });
+
+    // Count image captchas (reuse your logic)
+    images.forEach((img) => {
+  if (imageCaptchaDetector.isValidCaptchaImage(img)) {
+    imageCount++;
+  }
+});
+
+    sendResponse({
+      detected: iframeCount > 0 || imageCount > 0,
+      iframeCaptchas: iframeCount,
+      imageCaptchas: imageCount,
+      total: iframeCount + imageCount
+    });
+  }
+});
