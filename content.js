@@ -1,43 +1,11 @@
-// content.js - Focused on Image CAPTCHAs with distorted text only
+// content.js - CAPTCHA detection for image and iframe-based CAPTCHAs
 class ImageCaptchaDetector {
   constructor() {
     this.processedImages = new Set();
-    this.isEnabled = true; // Default to enabled, will be updated from storage
+    this.isEnabled = true; // default, updated from storage
     this.observer = null;
-    console.log(" Content script loaded");
-    
-
-    this.startDetection();  
-  }
-
-  highlightElement(el) {
-    el.style.outline = "3px solid red";
-  }
-
-  findAndProcessIframeCaptchas(container) {
-    const iframes = container.querySelectorAll("iframe");
-
-    console.log("Scanning iframes:", iframes.length);
-
-    iframes.forEach((frame) => {
-      const src = (frame.src || "").toLowerCase();
-      const title = (frame.title || "").toLowerCase();
-      const combined = src + title;
-
-      console.log("iframe src:", src);
-
-      if (
-        src.includes("recaptcha") ||
-        src.includes("google.com/recaptcha") ||
-        src.includes("hcaptcha") ||
-        combined.includes("challenge")
-      ) {
-        console.log("UnCAPTCHA: Iframe CAPTCHA detected");
-
-        frame.style.outline = "5px solid red";
-        frame.style.zIndex = "9999";
-      }
-    });
+    console.log("Content script loaded");
+    this.init();
   }
 
   init() {
@@ -52,7 +20,9 @@ class ImageCaptchaDetector {
 
   checkExtensionState() {
     chrome.storage.sync.get(['enabled'], (result) => {
-      this.isEnabled = result.enabled || false;
+      const enabled = result.enabled ?? true;
+      this.isEnabled = enabled;
+
       if (this.isEnabled) {
         this.startDetection();
       }
@@ -75,12 +45,14 @@ class ImageCaptchaDetector {
     this.watchForImageCaptcha();
     this.processExistingCaptchas();
 
-    // Initial scan
+    // Initial iframe scan
     this.findAndProcessIframeCaptchas(document.body);
 
-    // Delayed scan (important for recaptcha)
+    // Delayed scan for dynamically loaded CAPTCHA iframes
     setTimeout(() => {
-      this.findAndProcessIframeCaptchas(document.body);
+      if (this.isEnabled) {
+        this.findAndProcessIframeCaptchas(document.body);
+      }
     }, 2000);
   }
 
@@ -93,6 +65,133 @@ class ImageCaptchaDetector {
     }
 
     this.processedImages.clear();
+  }
+
+  highlightElement(el) {
+    el.style.outline = "3px solid red";
+  }
+
+  findAndProcessCaptchaImages(container) {
+    if (!this.isEnabled) return;
+
+    const images = [];
+    if (container.matches && container.matches("img")) {
+      images.push(container);
+    }
+    images.push(...container.querySelectorAll("img"));
+
+    images.forEach((img) => {
+      if (!this.processedImages.has(img.src) && this.isValidCaptchaImage(img)) {
+        this.processedImages.add(img.src);
+        this.highlightElement(img);
+        this.handleImageCaptcha(img);
+      }
+    });
+  }
+
+  findAndProcessIframeCaptchas(container) {
+    if (!this.isEnabled) return;
+
+    const iframes = [];
+    if (container.matches && container.matches("iframe")) {
+      iframes.push(container);
+    }
+    iframes.push(...container.querySelectorAll("iframe"));
+
+    console.log("Scanning iframes:", iframes.length);
+
+    iframes.forEach((frame) => {
+      const src = (frame.src || "").toLowerCase();
+      const score = this.getIframeCaptchaScore(frame);
+
+      console.log("Iframe CAPTCHA score:", score, src);
+
+      if (score >= 3) {
+        console.log("UnCAPTCHA: Iframe CAPTCHA detected");
+        frame.style.outline = "5px solid red";
+        frame.style.zIndex = "9999";
+      }
+    });
+  }
+
+  getImageCaptchaScore(img) {
+    let score = 0;
+
+    const src = (img.src || '').toLowerCase();
+    const alt = (img.alt || '').toLowerCase();
+    const id = (img.id || '').toLowerCase();
+    const className = (img.className || '').toLowerCase();
+
+    const captchaKeywords = [
+      'captcha', 'verify', 'verification', 'code', 'security',
+      'challenge', 'puzzle', 'auth', 'validation', 'robot'
+    ];
+
+    // +2 if keyword found
+    const hasKeyword = captchaKeywords.some(keyword =>
+      src.includes(keyword) ||
+      alt.includes(keyword) ||
+      id.includes(keyword) ||
+      className.includes(keyword)
+    );
+    if (hasKeyword) score += 2;
+
+    // +2 if near input
+    const hasNearbyInput = this.findCaptchaInput(img) !== null;
+    if (hasNearbyInput) score += 2;
+
+    // +1 if reasonable size
+    const hasReasonableSize =
+      img.width >= 50 && img.height >= 20 &&
+      img.width <= 500 && img.height <= 200;
+
+    if (hasReasonableSize) score += 1;
+
+    console.log("Image CAPTCHA score:", score, src);
+
+    return score;
+  }
+
+  isValidCaptchaImage(img) {
+    return this.getImageCaptchaScore(img) >= 4;
+  }
+
+  getIframeCaptchaScore(frame) {
+    let score = 0;
+
+    const src = (frame.src || "").toLowerCase();
+    const title = (frame.title || "").toLowerCase();
+    const combined = src + title;
+
+    // +3 if iframe source strongly suggests CAPTCHA
+    if (
+      src.includes("recaptcha") ||
+      src.includes("google.com/recaptcha") ||
+      src.includes("hcaptcha")
+    ) {
+      score += 3;
+    }
+
+    // +1 if challenge keyword appears
+    if (combined.includes("challenge")) {
+      score += 1;
+    }
+
+    return score;
+  }
+
+  getConfidenceLabel(score) {
+    if (score >= 4) return "High";
+    if (score >= 3) return "Medium";
+    if (score >= 1) return "Low";
+    return "None";
+  }
+
+  processExistingCaptchas() {
+    if (!this.isEnabled) return;
+
+    this.findAndProcessCaptchaImages(document.body);
+    this.findAndProcessIframeCaptchas(document.body);
   }
 
   watchForImageCaptcha() {
@@ -115,55 +214,6 @@ class ImageCaptchaDetector {
       childList: true,
       subtree: true
     });
-  }
-
-  processExistingCaptchas() {
-    if (!this.isEnabled) return;
-
-    this.findAndProcessCaptchaImages(document.body);
-    this.findAndProcessIframeCaptchas(document.body);
-  }
-
-  findAndProcessCaptchaImages(container) {
-    if (!this.isEnabled) return;
-
-    const images = container.querySelectorAll("img");
-
-    images.forEach((img) => {
-      if (!this.processedImages.has(img.src) && this.isValidCaptchaImage(img)) {
-        this.processedImages.add(img.src);
-        this.highlightElement(img);
-        this.handleImageCaptcha(img);
-      }
-    });
-  }
-
-  isValidCaptchaImage(img) {
-    const src = (img.src || '').toLowerCase();
-    const alt = (img.alt || '').toLowerCase();
-    const id = (img.id || '').toLowerCase();
-    const className = (img.className || '').toLowerCase();
-
-    const captchaKeywords = [
-      'captcha', 'verify', 'verification', 'code', 'security',
-      'challenge', 'puzzle', 'auth', 'validation', 'robot'
-    ];
-
-    const hasKeyword = captchaKeywords.some(keyword =>
-      src.includes(keyword) ||
-      alt.includes(keyword) ||
-      id.includes(keyword) ||
-      className.includes(keyword)
-    );
-  
-
-    const hasReasonableSize =
-      img.width >= 50 && img.height >= 20 &&
-      img.width <= 500 && img.height <= 200;
-
-    const hasNearbyInput = document.querySelector('input');
-
-    return hasKeyword || (hasNearbyInput && hasReasonableSize);
   }
 
   async handleImageCaptcha(imgElement) {
@@ -195,9 +245,10 @@ class ImageCaptchaDetector {
 
   waitForImageLoad(img) {
     return new Promise((resolve, reject) => {
-      if (img.complete) resolve();
-      else {
-        img.onload = resolve;
+      if (img.complete) {
+        resolve();
+      } else {
+        img.onload = () => resolve();
         img.onerror = () => reject(new Error('Image failed to load'));
         setTimeout(() => reject(new Error('Image load timeout')), 10000);
       }
@@ -223,29 +274,64 @@ class ImageCaptchaDetector {
   }
 
   findCaptchaInput(imgElement) {
+    // Strategy 1: same form
     const form = imgElement.closest('form');
     if (form) {
-      const inputs = form.querySelectorAll('input[type="text"], input[type="password"], input:not([type])');
+      const inputs = form.querySelectorAll(
+        'input[type="text"], input[type="password"], input:not([type])'
+      );
 
-      for (let input of inputs) {
-        if (this.isCaptchaInput(input)) return input;
+      for (const input of inputs) {
+        if (this.isCaptchaInput(input)) {
+          return input;
+        }
       }
 
-      if (inputs.length > 0) return inputs[0];
+      if (inputs.length > 0) {
+        return inputs[0];
+      }
     }
 
+    // Strategy 2: same parent containers
     let parent = imgElement.parentElement;
     while (parent && parent !== document.body) {
-      const inputs = parent.querySelectorAll('input[type="text"], input[type="password"], input:not([type])');
+      const inputs = parent.querySelectorAll(
+        'input[type="text"], input[type="password"], input:not([type])'
+      );
 
-      for (let input of inputs) {
-        if (this.isCaptchaInput(input)) return input;
+      for (const input of inputs) {
+        if (this.isCaptchaInput(input)) {
+          return input;
+        }
       }
 
       parent = parent.parentElement;
     }
 
-    return null;
+    // Strategy 3: closest nearby input
+    const allInputs = document.querySelectorAll(
+      'input[type="text"], input[type="password"], input:not([type])'
+    );
+
+    let closestInput = null;
+    let closestDistance = Infinity;
+
+    const imgRect = imgElement.getBoundingClientRect();
+
+    for (const input of allInputs) {
+      const inputRect = input.getBoundingClientRect();
+      const distance = Math.sqrt(
+        Math.pow(imgRect.left - inputRect.left, 2) +
+        Math.pow(imgRect.top - inputRect.top, 2)
+      );
+
+      if (distance < closestDistance && distance < 300) {
+        closestDistance = distance;
+        closestInput = input;
+      }
+    }
+
+    return closestInput;
   }
 
   isCaptchaInput(input) {
@@ -272,13 +358,21 @@ class ImageCaptchaDetector {
 
   async solveCaptcha(captchaData) {
     return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage({
-        action: 'solveCaptcha',
-        captchaData
-      }, (response) => {
-        if (chrome.runtime.lastError) reject();
-        else resolve(response);
-      });
+      chrome.runtime.sendMessage(
+        {
+          action: 'solveCaptcha',
+          captchaData
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else if (response && response.error) {
+            reject(new Error(response.error));
+          } else {
+            resolve(response);
+          }
+        }
+      );
     });
   }
 }
@@ -296,27 +390,35 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     let iframeCount = 0;
     let imageCount = 0;
+    let highestScore = 0;
 
-    // Count iframe captchas
     iframes.forEach((frame) => {
-      const src = (frame.src || "").toLowerCase();
-      if (src.includes("recaptcha") || src.includes("hcaptcha")) {
+      const score = imageCaptchaDetector.getIframeCaptchaScore(frame);
+      if (score >= 3) {
         iframeCount++;
+        highestScore = Math.max(highestScore, score);
       }
     });
 
-    // Count image captchas (reuse your logic)
     images.forEach((img) => {
-  if (imageCaptchaDetector.isValidCaptchaImage(img)) {
-    imageCount++;
-  }
-});
+      const score = imageCaptchaDetector.getImageCaptchaScore(img);
+      if (score >= 4) {
+        imageCount++;
+        highestScore = Math.max(highestScore, score);
+      }
+    });
+
+    const detected = iframeCount > 0 || imageCount > 0;
 
     sendResponse({
-      detected: iframeCount > 0 || imageCount > 0,
+      detected,
       iframeCaptchas: iframeCount,
       imageCaptchas: imageCount,
-      total: iframeCount + imageCount
+      total: iframeCount + imageCount,
+      detectionScore: highestScore,
+      confidence: detected
+        ? imageCaptchaDetector.getConfidenceLabel(highestScore)
+        : "None"
     });
   }
 });

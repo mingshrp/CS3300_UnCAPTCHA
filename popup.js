@@ -121,6 +121,8 @@ document.addEventListener('DOMContentLoaded', () => {
               Total: ${response.total}<br>
               Iframe: ${response.iframeCaptchas}<br>
               Image: ${response.imageCaptchas}<br><br>
+              Score: ${response.detectionScore}<br>
+              Confidence: ${response.confidence}<br><br> 
               <span style="color:#666; font-size:11px;">
                 CAPTCHAs can create barriers for users with disabilities.
               </span>
