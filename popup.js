@@ -114,13 +114,16 @@ document.addEventListener('DOMContentLoaded', () => {
           console.log("Response:", response);
 
           if (response.detected) {
-            statusEl.textContent = 'CAPTCHA detected';
+            statusEl.innerHTML = 'CAPTCHA detected — <strong>may affect accessibility</strong>';
             statusEl.style.color = 'red';
 
             detailsEl.innerHTML = `
               Total: ${response.total}<br>
               Iframe: ${response.iframeCaptchas}<br>
-              Image: ${response.imageCaptchas}
+              Image: ${response.imageCaptchas}<br><br>
+              <span style="color:#666; font-size:11px;">
+                CAPTCHAs can create barriers for users with disabilities.
+              </span>
             `;
           } else {
             statusEl.textContent = 'No CAPTCHA found';
