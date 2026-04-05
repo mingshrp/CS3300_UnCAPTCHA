@@ -8,12 +8,10 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      
       width: 260px;
-      
     }
 
-    /*  OUTER CONTAINER (THIS FIXES YOUR PROBLEM) */
+    /*  OUTER CONTAINER */
     .popup-container {
       background-color: #c5daee;
       border-radius: 20px;
@@ -82,26 +80,28 @@
     .status-box {
       margin-top: 15px;
       padding: 10px;
-      background: white;
+      background: linear-gradient(180deg, #ffffff, #f7f9fc); 
       border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
 
     .status {
-      font-weight: bold;
+      font-weight: 600;
       font-size: 14px;
+      color: #333; 
     }
 
     .details {
       font-size: 12px;
-      color: #555;
-      margin-top: 5px;
+      color: #666;
+      margin-top: 6px;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- 🔥 WRAPPER ADDED -->
   <div class="popup-container">
 
     <!-- HEADER -->
@@ -125,6 +125,20 @@
       <div id="status" class="status">Checking...</div>
       <div id="details" class="details"></div>
     </div>
+
+    <!--  SCAN BUTTON (CORRECT PLACE) -->
+    <button id="scanButton" style="
+      margin-top:10px;
+      width:100%;
+      padding:8px;
+      border:none;
+      border-radius:8px;
+      background:#6ea4d7;
+      color:white;
+      cursor:pointer;
+    ">
+      Scan Page
+    </button>
 
   </div>
 
