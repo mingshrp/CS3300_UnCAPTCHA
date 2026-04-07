@@ -11,7 +11,7 @@ class ImageCaptchaDetector {
   init() {
     this.checkExtensionState();
 
-    chrome.runtime.onMessage.addListener((request) => {
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (request.action === 'toggleStateChanged') {
         this.handleToggleChange(request.isEnabled);
       }
@@ -377,10 +377,149 @@ class ImageCaptchaDetector {
   }
 }
 
-const imageCaptchaDetector = new ImageCaptchaDetector();
+class RecaptchaV2Detector {
+  constructor() {
+    this.processedWidgets = new Set();
+    this.isEnabled = false;
+    this.observer = null;
+  }
 
+  init() {
+    this.checkExtensionState();
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+      if (request.action === 'toggleStateChanged') {
+        this.handleToggleChange(request.isEnabled);
+      }
+    });
+  }
+
+  checkExtensionState() {
+    chrome.storage.sync.get(['enabled'], (result) => {
+      this.isEnabled = result.enabled || false;
+      if (this.isEnabled) {
+        this.startDetection();
+      }
+    });
+  }
+
+  handleToggleChange(isEnabled) {
+    this.isEnabled = isEnabled;
+    if (isEnabled) {
+      this.startDetection();
+    } else {
+      this.stopDetection();
+    }
+  }
+
+  startDetection() {
+    console.log('UnCAPTCHA: reCAPTCHA v2 detector started');
+    this.watchForRecaptcha();
+    this.processExistingRecaptchas();
+  }
+
+  stopDetection() {
+    if (this.observer) {
+      this.observer.disconnect();
+      this.observer = null;
+    }
+    this.processedWidgets.clear();
+  }
+
+  watchForRecaptcha() {
+    if (this.observer) return;
+    this.observer = new MutationObserver((mutations) => {
+      if (!this.isEnabled) return;
+      this.processExistingRecaptchas();
+    });
+    this.observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  processExistingRecaptchas() {
+    if (!this.isEnabled) return;
+    
+    // Look for reCAPTCHA v2 containers
+    const widgets = document.querySelectorAll('.g-recaptcha, [data-sitekey]');
+    widgets.forEach(widget => {
+      const sitekey = widget.getAttribute('data-sitekey');
+      if (sitekey && !this.processedWidgets.has(widget)) {
+        this.handleRecaptcha(widget, sitekey);
+      }
+    });
+
+    // Also look for iframes
+    const iframes = document.querySelectorAll('iframe[src*="google.com/recaptcha/api2/anchor"]');
+    iframes.forEach(iframe => {
+      const url = new URL(iframe.src);
+      const sitekey = url.searchParams.get('k');
+      if (sitekey && !this.processedWidgets.has(iframe)) {
+        this.handleRecaptcha(iframe, sitekey);
+      }
+    });
+  }
+
+  async handleRecaptcha(element, sitekey) {
+    this.processedWidgets.add(element);
+    console.log('UnCAPTCHA: reCAPTCHA v2 detected, sitekey:', sitekey);
+
+    try {
+      const captchaData = {
+        method: 'userrecaptcha',
+        googlekey: sitekey,
+        pageurl: window.location.href
+      };
+
+      const response = await this.solveCaptcha(captchaData);
+      if (response.solution) {
+        this.applySolution(element, response.solution);
+      }
+    } catch (error) {
+      console.error('UnCAPTCHA: Failed to solve reCAPTCHA v2:', error);
+    }
+  }
+
+  applySolution(element, solution) {
+    const textarea = document.getElementById('g-recaptcha-response') || 
+                     element.querySelector('#g-recaptcha-response') ||
+                     document.querySelector('[name="g-recaptcha-response"]');
+    
+    if (textarea) {
+      textarea.innerHTML = solution;
+      textarea.value = solution;
+      
+      // Fire change event
+      textarea.dispatchEvent(new Event('change', { bubbles: true }));
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+      // Check for callback
+      const callback = element.getAttribute('data-callback') || 
+                       element.getAttribute('callback');
+      if (callback && typeof window[callback] === 'function') {
+        window[callback](solution);
+      }
+    }
+  }
+
+  async solveCaptcha(captchaData) {
+    return new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({
+        action: 'solveCaptcha',
+        captchaData: captchaData
+      }, (response) => {
+        if (chrome.runtime.lastError) reject(new Error(chrome.runtime.lastError.message));
+        else if (response.error) reject(new Error(response.error));
+        else resolve(response);
+      });
+    });
+  }
+}
+
+const imageCaptchaDetector = new ImageCaptchaDetector();
+const recaptchaV2Detector = new RecaptchaV2Detector();
+recaptchaV2Detector.init();
+
+// Export for unit testing in Node.js environment
 if (typeof module !== 'undefined') {
-  module.exports = { ImageCaptchaDetector };
+  module.exports = { ImageCaptchaDetector, RecaptchaV2Detector };
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -407,6 +546,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         highestScore = Math.max(highestScore, score);
       }
     });
+
+    // Also check for reCAPTCHA v2 widgets that might not be in iframes yet or have specific markers
+    const recaptchaWidgets = document.querySelectorAll('.g-recaptcha, [data-sitekey]');
+    if (recaptchaWidgets.length > 0) {
+        // If we found widgets, ensure iframeCount reflects them if they haven't been counted via iframes
+        // This is a bit redundant but ensures we don't miss them during scanning
+        if (iframeCount === 0) iframeCount = recaptchaWidgets.length;
+        highestScore = Math.max(highestScore, 3); // reCAPTCHA v2 is at least Medium (3)
+    }
 
     const detected = iframeCount > 0 || imageCount > 0;
 

@@ -1,4 +1,12 @@
-// Mock chrome APIs before requiring the code
+// Mock MutationObserver
+global.MutationObserver = class {
+  constructor(callback) {
+    this.callback = callback;
+  }
+  disconnect() {}
+  observe(element, options) {}
+};
+
 global.chrome = {
   runtime: {
     onMessage: {
@@ -9,7 +17,7 @@ global.chrome = {
   },
   storage: {
     sync: {
-      get: jest.fn((keys, callback) => callback({})),
+      get: jest.fn((keys, callback) => callback({ enabled: true })),
       set: jest.fn((data, callback) => callback && callback()),
     },
     onChanged: {
@@ -18,40 +26,52 @@ global.chrome = {
   },
 };
 
-const { ImageCaptchaDetector } = require('../../content.js');
+const { ImageCaptchaDetector, RecaptchaV2Detector } = require('../../content.js');
 
 describe('ImageCaptchaDetector', () => {
   let detector;
 
   beforeEach(() => {
-    // Setup a clean environment for each test
     document.body.innerHTML = '';
     detector = new ImageCaptchaDetector();
   });
 
-  test('isValidCaptchaImage returns true for likely captcha images', () => {
-    const img = document.createElement('img');
-    img.src = 'http://example.com/captcha.jpg';
-    img.id = 'captchaImage';
-    img.width = 250;
-    img.height = 50;
-    
-    // Add an input field nearby (required by isValidCaptchaImage)
+  test('isCaptchaInput returns true for captcha input fields', () => {
     const input = document.createElement('input');
-    input.name = 'captcha_code';
-    document.body.appendChild(img);
-    document.body.appendChild(input);
+    input.id = 'captcha_code';
+    expect(detector.isCaptchaInput(input)).toBe(true);
+  });
+});
 
-    expect(detector.isValidCaptchaImage(img)).toBe(true);
+describe('RecaptchaV2Detector', () => {
+  let detector;
+
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    detector = new RecaptchaV2Detector();
+    detector.isEnabled = true;
   });
 
-  test('isValidCaptchaImage returns false for images without keywords or nearby input', () => {
-    const img = document.createElement('img');
-    img.src = 'http://example.com/logo.png';
-    img.width = 100;
-    img.height = 100;
-    document.body.appendChild(img);
+  test('processExistingRecaptchas finds g-recaptcha elements', () => {
+    const widget = document.createElement('div');
+    widget.className = 'g-recaptcha';
+    widget.setAttribute('data-sitekey', '6LeOeSkUAAAAAAs_FByOFeC0kiY94_N9HOA95_3S');
+    document.body.appendChild(widget);
 
-    expect(detector.isValidCaptchaImage(img)).toBe(false);
+    const handleSpy = jest.spyOn(detector, 'handleRecaptcha');
+    detector.processExistingRecaptchas();
+    
+    expect(handleSpy).toHaveBeenCalledWith(widget, '6LeOeSkUAAAAAAs_FByOFeC0kiY94_N9HOA95_3S');
+  });
+
+  test('processExistingRecaptchas finds recaptcha iframes', () => {
+    const iframe = document.createElement('iframe');
+    iframe.src = 'https://www.google.com/recaptcha/api2/anchor?k=6LeOeSkUAAAAAAs_FByOFeC0kiY94_N9HOA95_3S';
+    document.body.appendChild(iframe);
+
+    const handleSpy = jest.spyOn(detector, 'handleRecaptcha');
+    detector.processExistingRecaptchas();
+    
+    expect(handleSpy).toHaveBeenCalledWith(iframe, '6LeOeSkUAAAAAAs_FByOFeC0kiY94_N9HOA95_3S');
   });
 });

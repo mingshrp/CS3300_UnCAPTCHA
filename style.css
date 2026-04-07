@@ -82,3 +82,48 @@ input:checked + .slider:after {
   color: #ffffff;
   top: 14px; /* ensure the checked state is also moved down */
 }
+
+input[type="password"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  border: 1px solid #6ea4d7;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
+
+.api-key-container {
+  margin-top: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.api-key-label {
+  font-size: 12px;
+  color: #3c454e;
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.save-btn {
+  background-color: #6ea4d7;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'Montserrat', Arial, sans-serif;
+  font-weight: bold;
+  font-size: 12px;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.save-btn:hover {
+  background-color: #5a8bb8;
+}
+

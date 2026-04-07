@@ -1,6 +1,8 @@
 // popup.js
 document.addEventListener('DOMContentLoaded', () => {
   const toggleButton = document.getElementById('toggleButton');
+  const apiKeyInput = document.getElementById('apiKeyInput');
+  const saveApiKeyBtn = document.getElementById('saveApiKey');
   const statusEl = document.getElementById('status');
   const detailsEl = document.getElementById('details');
   const scanButton = document.getElementById('scanButton');
@@ -12,7 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const enabled = result.enabled ?? true;
     toggleButton.checked = enabled;
 
-    if (!result.apiKey) {
+    if (result.apiKey && result.apiKey !== 'YOUR_API_KEY_HERE') {
+      apiKeyInput.value = result.apiKey;
+    } else {
       console.log("No API key set");
     }
 
@@ -53,6 +57,30 @@ document.addEventListener('DOMContentLoaded', () => {
       // Only refresh status (no scanning UI here)
       updateCaptchaStatus();
     });
+  });
+
+  // Handle save API key button
+  saveApiKeyBtn.addEventListener('click', function() {
+    const apiKey = apiKeyInput.value.trim();
+    if (apiKey) {
+      chrome.storage.sync.set({apiKey: apiKey}, function() {
+        console.log('API key saved');
+        saveApiKeyBtn.textContent = 'Saved!';
+        saveApiKeyBtn.style.backgroundColor = '#4CAF50';
+        
+        setTimeout(() => {
+          saveApiKeyBtn.textContent = 'Save API Key';
+          saveApiKeyBtn.style.backgroundColor = '#6ea4d7';
+        }, 2000);
+        
+        chrome.runtime.sendMessage({
+          action: 'updateApiKey',
+          apiKey: apiKey
+        });
+      });
+    } else {
+      alert('Please enter a valid API key.');
+    }
   });
 
   // SCAN BUTTON
@@ -135,14 +163,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       );
     });
-  }
-
-  function promptForApiKey() {
-    const apiKey = prompt('Please enter your 2captcha API key:');
-    if (apiKey && apiKey.trim()) {
-      chrome.storage.sync.set({ apiKey: apiKey.trim() }, () => {
-        console.log('API key saved');
-      });
-    }
   }
 });
