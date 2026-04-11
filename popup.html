@@ -121,6 +121,16 @@
       </label>
     </div>
 
+    <!-- AUTO-SOLVE TOGGLE -->
+    <div class="row">
+      <span style="font-size: 12px;">Auto-solve CAPTCHAs</span>
+
+      <label class="switch">
+        <input type="checkbox" id="autoSolveToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <!-- STATUS -->
     <div class="status-box">
       <div id="status" class="status">Checking...</div>
@@ -142,10 +152,18 @@
     </button>
 
     <!-- API KEY SECTION -->
-    <div class="api-key-container">
-      <label class="api-key-label" for="apiKeyInput">2captcha API Key</label>
+    <div id="apiKeySection" class="api-key-container">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+        <label class="api-key-label" for="apiKeyInput" style="margin: 0;">2captcha API Key</label>
+        <button id="hideApiKey" class="save-btn" style="width: auto; padding: 2px 8px; font-size: 10px; margin: 0; display: none;">Hide</button>
+      </div>
       <input type="password" id="apiKeyInput" placeholder="Enter API Key..." />
       <button id="saveApiKey" class="save-btn">Save API Key</button>
+    </div>
+
+    <!-- CHANGE KEY BUTTON -->
+    <div id="changeKeyContainer" style="display: none; text-align: center; margin-top: 10px;">
+      <button id="changeKeyBtn" class="save-btn" style="width: auto; padding: 4px 12px; background-color: transparent; color: #3c454e; border: 1px solid #3c454e;">Change API Key</button>
     </div>
 
   </div>

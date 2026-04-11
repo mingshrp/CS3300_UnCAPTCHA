@@ -1,28 +1,66 @@
 // popup.js
 document.addEventListener('DOMContentLoaded', () => {
   const toggleButton = document.getElementById('toggleButton');
+  const autoSolveToggle = document.getElementById('autoSolveToggle');
   const apiKeyInput = document.getElementById('apiKeyInput');
   const saveApiKeyBtn = document.getElementById('saveApiKey');
+  const apiKeySection = document.getElementById('apiKeySection');
+  const changeKeyContainer = document.getElementById('changeKeyContainer');
+  const changeKeyBtn = document.getElementById('changeKeyBtn');
+  const hideApiKeyBtn = document.getElementById('hideApiKey');
   const statusEl = document.getElementById('status');
   const detailsEl = document.getElementById('details');
   const scanButton = document.getElementById('scanButton');
 
   console.log("Popup loaded");
 
+  function showApiKeySection() {
+    apiKeySection.style.display = 'block';
+    changeKeyContainer.style.display = 'none';
+  }
+
+  function hideApiKeySection() {
+    apiKeySection.style.display = 'none';
+    changeKeyContainer.style.display = 'block';
+  }
+
   // Load saved state
-  chrome.storage.sync.get(['enabled', 'apiKey'], (result) => {
+  chrome.storage.sync.get(['enabled', 'apiKey', 'autoSolve'], (result) => {
     const enabled = result.enabled ?? true;
     toggleButton.checked = enabled;
 
+    // Auto-solve defaults to off.
+    autoSolveToggle.checked = result.autoSolve ?? false;
+
     if (result.apiKey && result.apiKey !== 'YOUR_API_KEY_HERE') {
       apiKeyInput.value = result.apiKey;
+      hideApiKeySection();
     } else {
       console.log("No API key set");
+      showApiKeySection();
     }
 
     statusEl.innerHTML = "Click <strong>Scan Page</strong>";
     statusEl.style.color = "#333";
     detailsEl.textContent = "";
+  });
+
+  // Persist auto-solve toggle. The content script reads this flag fresh
+  // on each captcha encounter, so no message plumbing is needed here.
+  autoSolveToggle.addEventListener('change', () => {
+    chrome.storage.sync.set({ autoSolve: autoSolveToggle.checked }, () => {
+      console.log('UnCAPTCHA auto-solve', autoSolveToggle.checked ? 'on' : 'off');
+    });
+  });
+
+  // Handle API Key Section visibility
+  changeKeyBtn.addEventListener('click', () => {
+    showApiKeySection();
+    hideApiKeyBtn.style.display = 'block';
+  });
+
+  hideApiKeyBtn.addEventListener('click', () => {
+    hideApiKeySection();
   });
 
   // Toggle ON/OFF
@@ -71,6 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
           saveApiKeyBtn.textContent = 'Save API Key';
           saveApiKeyBtn.style.backgroundColor = '#6ea4d7';
+          hideApiKeySection();
+          hideApiKeyBtn.style.display = 'none';
         }, 2000);
         
         chrome.runtime.sendMessage({

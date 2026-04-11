@@ -45,6 +45,7 @@ class CaptchaSolver {
       });
       
       const result = await response.json();
+      console.log('2captcha in.php response:', result);
       
       if (result.status === 1) {
         return result.request; // Returns captcha ID
@@ -64,7 +65,15 @@ class CaptchaSolver {
     while (attempts < maxAttempts) {
       try {
         const response = await fetch(`${this.baseUrl}/res.php?key=${this.apiKey}&action=get&id=${captchaId}&json=1`);
-        const result = await response.json();
+        const text = await response.text();
+        let result;
+        try {
+          result = JSON.parse(text);
+        } catch (e) {
+          console.error('Failed to parse 2captcha response as JSON:', text);
+          throw new Error(`Invalid 2captcha response format: ${text}`);
+        }
+        console.log('2captcha res.php response:', result);
         
         if (result.status === 1) {
           return result.request; // Returns the solution
@@ -73,7 +82,16 @@ class CaptchaSolver {
           await new Promise(resolve => setTimeout(resolve, 10000));
           attempts++;
         } else {
-          throw new Error(result.error_text || result.request || 'Failed to get captcha result');
+          let errorMsg = result.error_text || result.request || 'Failed to get captcha result';
+          if (errorMsg === 'ERROR_KEY_DOES_NOT_EXIST') {
+            errorMsg = 'Invalid 2captcha API key. Please check your settings.';
+          } else if (errorMsg === 'ERROR_ZERO_BALANCE') {
+            errorMsg = 'Your 2captcha account has zero balance.';
+          } else {
+            // Include raw result for debugging if it's an unknown error
+            errorMsg = `2captcha error: ${errorMsg} (${JSON.stringify(result)})`;
+          }
+          throw new Error(errorMsg);
         }
       } catch (error) {
         console.error('Error getting captcha result:', error);
@@ -108,7 +126,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'toggleExtension') {
     captchaSolver.enabled = request.enabled;
     console.log('Extension', request.enabled ? 'enabled' : 'disabled');
-    return true;
+    sendResponse({success: true});
+    return false;
   }
   
   if (request.action === 'solveCaptcha') {
@@ -131,7 +150,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'updateApiKey') {
     captchaSolver.apiKey = request.apiKey;
     chrome.storage.sync.set({apiKey: request.apiKey});
-    return true;
+    sendResponse({success: true});
+    return false;
   }
 });
 
