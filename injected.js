@@ -21,7 +21,6 @@
   const textareas = new Set();
   document.querySelectorAll('textarea[id^="g-recaptcha-response"], textarea[name^="g-recaptcha-response"]').forEach(t => textareas.add(t));
   textareas.forEach((t) => {
-    t.style.display = '';
     t.innerHTML = solution;
     t.value = solution;
     t.dispatchEvent(new Event('input', { bubbles: true }));
