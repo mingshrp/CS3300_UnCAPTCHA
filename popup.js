@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   console.log("Popup loaded");
 
+  // The Change API Key button stays hidden until the user enters the
+  // Konami code while the popup is open. Tracked here so showing the
+  // stored-key state doesn't re-reveal the button.
+  let konamiUnlocked = false;
+
   function showApiKeySection() {
     apiKeySection.style.display = 'block';
     changeKeyContainer.style.display = 'none';
@@ -21,8 +26,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function hideApiKeySection() {
     apiKeySection.style.display = 'none';
-    changeKeyContainer.style.display = 'block';
+    changeKeyContainer.style.display = konamiUnlocked ? 'block' : 'none';
   }
+
+  const konamiSequence = [
+    'ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown',
+    'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight',
+    'b', 'a'
+  ];
+  let konamiProgress = 0;
+  document.addEventListener('keydown', (e) => {
+    if (konamiUnlocked) return;
+    const expected = konamiSequence[konamiProgress];
+    const key = expected.length === 1 ? e.key.toLowerCase() : e.key;
+    if (key === expected) {
+      konamiProgress++;
+      if (konamiProgress === konamiSequence.length) {
+        konamiUnlocked = true;
+        if (apiKeySection.style.display === 'none') {
+          changeKeyContainer.style.display = 'block';
+        }
+      }
+    } else {
+      konamiProgress = key === konamiSequence[0] ? 1 : 0;
+    }
+  });
 
   // Load saved state
   chrome.storage.sync.get(['enabled', 'apiKey', 'autoSolve'], (result) => {
